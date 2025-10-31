@@ -1,0 +1,34 @@
+{
+  "scenes": [
+    {
+      "background": "bg1.png",
+      "dialogues": [
+        {
+          "character": "hero.png",
+          "name": "Хиро",
+          "text": "Какой чудесный день для приключений!"
+        },
+        {
+          "character": "friend.png",
+          "name": "Аки",
+          "text": "Пошли скорее, пока не стемнело!"
+        }
+      ]
+    },
+    {
+      "background": "bg2.png",
+      "dialogues": [
+        {
+          "character": "hero.png",
+          "name": "Хиро",
+          "text": "Мы пришли... это то самое место?"
+        },
+        {
+          "character": "friend.png",
+          "name": "Аки",
+          "text": "Да. Здесь всё началось."
+        }
+      ]
+    }
+  ]
+}
