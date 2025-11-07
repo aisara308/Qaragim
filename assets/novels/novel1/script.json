@@ -1,32 +1,227 @@
 {
   "scenes": [
     {
-      "background": "bg1.png",
+      "background": "house.png",
       "dialogues": [
         {
-          "character": "hero.png",
-          "name": "Хиро",
-          "text": "Какой чудесный день для приключений!"
+          "character": "girlNeutral.png",
+          "name": "Оқиға",
+          "text": "Баяғыда Мақта қыз болыпты. Мақта қыз үйін жинап жүріп, бір мейіз тауып алады да, мысықты шақырады, Мысық келмейді."
         },
         {
-          "character": "friend.png",
-          "name": "Аки",
-          "text": "Пошли скорее, пока не стемнело!"
+          "character": "girlMad.png",
+          "name": "Мақта қыз",
+          "text": "Келмесең келме! Мейізді өзім жеп қоямын."
+        },
+        {
+          "character": "catNeutral.png",
+          "name": "Оқиға",
+          "text": "Жеп болған соң мысық келді"
+        },
+        {
+          "character": "catNeutral.png",
+          "name": "Мысық",
+          "text": "Неге шақырдың?"
+        },
+        {
+          "character": "girlNeutral.png",
+          "name": "Мақта қыз",
+          "text": "Айтпаймын!"
+        },
+        {
+          "character": "catMad.png",
+          "name": "Мысық",
+          "text": "Ендеше қатығыңды төгем!"
+        },
+        {
+          "character": "girlMad.png",
+          "name": "Мақта қыз",
+          "text": "Мен құйрығыңды кесіп аламын!"
+        },
+        {
+          "character": "girlMad.png",
+          "name": "Оқиға",
+          "text": "Мысық қатықты төгеді. Мақта қыз мысықтың құйрығын кесіп алады."
+        },
+        {
+          "character": "catNeutral.png",
+          "name": "Мысық",
+          "text": "Апа, апа, құйрығымды берші!"
+        },
+        {
+          "character": "girlMad.png",
+          "name": "Мақта қыз",
+          "text": "Менің қатығымды төле!"
         }
       ]
     },
     {
-      "background": "bg2.png",
+      "background": "grass.png",
       "dialogues": [
         {
-          "character": "hero.png",
-          "name": "Хиро",
-          "text": "Мы пришли... это то самое место?"
+          "character": "cow.png",
+          "name": "Оқиға",
+          "text": "Мысық сиырға барады."
         },
         {
-          "character": "friend.png",
-          "name": "Аки",
-          "text": "Да. Здесь всё началось."
+          "character": "catHappy.png",
+          "name": "Мысық",
+          "text": "Сиыр, маған қатық берші!"
+        },
+        {
+          "character": "cow.png",
+          "name": "Сиыр",
+          "text": "Менің қарным ашып тұр. Маған жапырақ әкеліп берші!"
+        },
+        {
+          "character": "catHappy.png",
+          "name": "Мысық ағашқа барып",
+          "text": "Ағаш, ағаш, жапырағыңды берші!"
+        },
+        {
+          "character": "tree.png",
+          "name": "Ағаш",
+          "text": "Мен шөлдеп тұрмын. Су әкелсең, жапырақ беремін"
+        },
+        {
+          "character": "catNeutral.png",
+          "name": "Оқиға",
+          "text": "Мысық суға бара жатса, су әкеле жатқан қыздарды көреді."
+        },
+        {
+          "character": "catHappy.png",
+          "name": "Мысық",
+          "text": "Қыздар, қыздар, маған су беріңіздерші!"
+        },
+        {
+          "character": "girls.png",
+          "name": "Қыздар",
+          "text": "Бізге сағыз әкеліп берсең, біз саған су береміз."
+        }
+      ]
+    },
+    {
+      "background": "store.png",
+      "dialogues": [
+        {
+          "character": "catNeutral.png",
+          "name": "Оқиға",
+          "text": "Мысық дүкенге барады."
+        },
+        {
+          "character": "catHappy.png",
+          "name": "Мысық",
+          "text": "Әй, дүкенші, маған сағыз берші!"
+        },
+        {
+          "character": "cashier.png",
+          "name": "Дүкенші",
+          "text": "Маған жұмыртқа бер!"
+        }
+      ]
+    },
+    {
+      "background": "henhouse.png",
+      "dialogues": [
+        {
+          "character": "catNeutral.png",
+          "name": "Оқиға",
+          "text": "Мысық тауыққа барады"
+        },
+        {
+          "character": "catHappy.png",
+          "name": "Мысық",
+          "text": "Тауық, тауық, маған жұмыртқа берші!"
+        },
+        {
+          "character": "hen.png",
+          "name": "Тауық",
+          "text": "Бізге дән әкеліп берсең, біз саған жұмыртқа береміз."
+        }
+      ]
+    },
+    {
+      "background": "grass.png",
+      "dialogues": [
+        {
+          "character": "catSurprised.png",
+          "name": "Оқиға",
+          "text": "Мысық: «Енді не қыламын?» – деп бара жатса, бір ін қазып жатқан тышқанды көреді. Мысық тышқанды бас салады."
+        },
+        {
+          "character": "catMad.png",
+          "name": "Мысық",
+          "text": "Жаныңның барында айт! Үйіңде не бар?"
+        },
+        {
+          "character": "mouse.png",
+          "name": "Қорыққан тышқан",
+          "text": "Үйімде бір табақ тары бар."
+        },
+        {
+          "character": "catMad.png",
+          "name": "Мысық",
+          "text": "Маған бір уыс тары бер!"
+        }
+      ]
+    },
+    {
+      "background": "mouseHouse.png",
+      "dialogues": [
+        {
+          "character": "mouse.png",
+          "name": "Оқиға",
+          "text": "Тышқан үйіне барып, бір уыс тары әкеліп береді."
+        }
+      ]
+    },
+    {
+      "background": "henhouse.png",
+      "dialogues": [
+        {
+          "character": "hen.png",
+          "name": "Оқиға",
+          "text": "Мысық тарыны апарып тауыққа береді, тауық жұмыртқа береді."
+        }
+      ]
+    },
+    {
+      "background": "store.png",
+      "dialogues": [
+        {
+          "character": "cashier.png",
+          "name": "Оқиға",
+          "text": "Жұмыртқаны апарып дүкеншіге береді, дүкенші сағыз береді."
+        }
+      ]
+    },
+    {
+      "background": "grass.png",
+      "dialogues": [
+        {
+          "character": "girls.png",
+          "name": "Оқиға",
+          "text": "Сағызды апарып қыздарға береді, қыздар су береді."
+        },
+        {
+          "character": "tree.png",
+          "name": "Оқиға",
+          "text": "Суды апарып ағашқа береді, ағаш жапырақ береді."
+        },
+        {
+          "character": "cow.png",
+          "name": "Оқиға",
+          "text": "Жапырақты апарып сиырға береді, сиыр қатық береді."
+        }
+      ]
+    },
+    {
+      "background": "house.png",
+      "dialogues": [
+        {
+          "character": "girlHappy.png",
+          "name": "Оқиға",
+          "text": "Қатықты апарып Мақта қызға береді, Мақта қыз мысықтың құйрығын береді."
         }
       ]
     }

@@ -1,16 +1,145 @@
-# qaragim
+# 🧩 Пайдаланушы және новелла API құжаттамасы
 
-A new Flutter project.
+Бұл жоба пайдаланушыларды тіркеу, авторизациялау және олардың новеллаларын басқару жүйесін жүзеге асырады. API Node.js, Express, MongoDB және JWT технологияларын қолданады.
 
-## Getting Started
+## 🔐 Авторизация маршруттары
 
-This project is a starting point for a Flutter application.
+### POST /register  
+Сипаттама: Жаңа пайдаланушыны тіркеу.  
+Сұраныс денесі:  
+{
+  "name": "Айсара",
+  "email": "aisara@example.com",
+  "password": "123456"
+}  
+Жауап:  
+{
+  "status": true,
+  "token": "<JWT_TOKEN>",
+  "success": "Пайдаланушы сәтті тіркелді."
+}
 
-A few resources to get you started if this is your first Flutter project:
+### POST /login  
+Сипаттама: Пайдаланушы жүйеге кіреді.  
+Сұраныс денесі:  
+{
+  "email": "aisara@example.com",
+  "password": "123456"
+}  
+Жауап:  
+{
+  "status": true,
+  "token": "<JWT_TOKEN>"
+}
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 👤 Пайдаланушыны басқару маршруттары
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### POST /enterbirthday  
+Сипаттама: Токен арқылы пайдаланушы туған күнін енгізеді.  
+Тақырып (Header):  
+Authorization: Bearer <JWT_TOKEN>  
+Сұраныс денесі:  
+{
+  "birthday": "2004-05-12"
+}  
+Жауап:  
+{
+  "message": "Туған күн сәтті қосылды",
+  "token": "<ЖАҢА_ТОКЕН>",
+  "user": {
+    "name": "Айсара",
+    "email": "aisara@example.com",
+    "birthday": "2004-05-12"
+  }
+}
+
+### PUT /updateAccount  
+Сипаттама: Пайдаланушы мәліметтерін жаңарту.  
+Тақырып:  
+Authorization: Bearer <JWT_TOKEN>  
+Сұраныс денесі (міндетті емес барлық өрістер):  
+{
+  "name": "Айсара Жаңа",
+  "email": "newemail@example.com",
+  "birthday": "2004-05-12"
+}  
+Жауап:  
+{
+  "status": true,
+  "message": "Пайдаланушы деректері сәтті жаңартылды",
+  "token": "<ЖАҢА_ТОКЕН>",
+  "user": {
+    "name": "Айсара Жаңа",
+    "email": "newemail@example.com",
+    "birthday": "2004-05-12"
+  }
+}
+
+### POST /resetPassword  
+Сипаттама: Пайдаланушы аты және email арқылы құпия сөзді өзгерту.  
+Сұраныс денесі:  
+{
+  "name": "Айсара",
+  "email": "aisara@example.com",
+  "newPassword": "new123456"
+}  
+Жауап:  
+{
+  "status": true,
+  "message": "Құпия сөз сәтті өзгертілді",
+  "token": "<ЖАҢА_ТОКЕН>"
+}
+
+### DELETE /deleteAccount  
+Сипаттама: Токен арқылы аккаунтты жою.  
+Тақырып:  
+Authorization: Bearer <JWT_TOKEN>  
+Жауап:  
+{
+  "status": true,
+  "message": "Аккаунт сәтті жойылды"
+}
+
+## 📚 Новелла маршруттары
+
+### GET /novels  
+Сипаттама: Барлық новеллаларды алу.  
+Жауап:  
+[
+  {
+    "_id": "123",
+    "title": "Махаббат жолы",
+    "cover": "cover.jpg",
+    "folder": "romance"
+  }
+]
+
+### POST /novels/add  
+Сипаттама: Пайдаланушының тізіміне жаңа новелла қосу.  
+Тақырып:  
+Authorization: Bearer <JWT_TOKEN>  
+Сұраныс денесі:  
+{
+  "title": "Жаңа новелла",
+  "cover": "novel.jpg",
+  "folder": "drama"
+}  
+Жауап:  
+{
+  "message": "Новелла сәтті қосылды"
+}
+
+### GET /novels/user  
+Сипаттама: Пайдаланушы қосқан новеллаларды алу.  
+Тақырып:  
+Authorization: Bearer <JWT_TOKEN>  
+Жауап:  
+[
+  {
+    "title": "Махаббат жолы",
+    "cover": "cover.jpg",
+    "folder": "romance"
+  }
+]
+
+---

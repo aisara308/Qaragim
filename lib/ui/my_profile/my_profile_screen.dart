@@ -16,7 +16,6 @@ class MyProfileScreen extends StatefulWidget {
 }
 
 class _MyProfileScreenState extends State<MyProfileScreen> {
-  DateTime? _selectedDate;
   bool _isLoading = false;
 
   Future<void> _pickBirthday(BuildContext context, AuthProvider auth) async {
@@ -29,10 +28,6 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
-
       var formatted =
           "${picked.day.toString().padLeft(2, '0')}.${picked.month.toString().padLeft(2, '0')}.${picked.year}";
       await _sendBirthday(auth, formatted);

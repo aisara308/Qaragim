@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,10 +15,23 @@ class _NovelPageState extends State<NovelPage> {
   List scenes = [];
   int sceneIndex = 0;
   int dialogueIndex = 0;
+
+  Timer? _inactivityTimer;
+
   @override
   void initState() {
     super.initState();
     loadScript();
+    _startInactivityTimer();
+  }
+
+  void _startInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   Future<void> loadScript() async {
@@ -45,6 +58,13 @@ class _NovelPageState extends State<NovelPage> {
         Navigator.pop(context);
       }
     });
+    _startInactivityTimer();
+  }
+
+  @override
+  void dispose() {
+    _inactivityTimer?.cancel();
+    super.dispose();
   }
 
   Widget build(BuildContext context) {
@@ -57,7 +77,10 @@ class _NovelPageState extends State<NovelPage> {
 
     return Scaffold(
       body: GestureDetector(
-        onTap: nextDialogue,
+        onTap: () {
+          _startInactivityTimer();
+          nextDialogue();
+        },
         child: Stack(
           children: [
             Image.asset(
@@ -111,7 +134,7 @@ class _NovelPageState extends State<NovelPage> {
                           softWrap: true,
                           style: const TextStyle(
                             color: Color.fromRGBO(48, 37, 62, 1),
-                            fontSize: 20,
+                            fontSize: 24,
                             height: 1.4,
                           ),
                         ),

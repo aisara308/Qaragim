@@ -27,12 +27,15 @@ dependencies:
   cupertino_icons: ^1.0.8
   ionicons:
   flame: ^1.32.0
-  flame_audio: ^1.4.0
+  flame_audio: ^2.11.11
   jwt_decoder: ^2.0.1
   provider: ^6.1.5+1
   settings_ui:
   flutter_settings_screens:
-  http: ^0.13.6
+  http: ^1.5.0
+  shared_preferences:
+  local_auth:
+  url_launcher:
   flutter_localizations:
     sdk: flutter
 
@@ -45,7 +48,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

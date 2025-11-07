@@ -17,7 +17,6 @@ class MyTitles extends StatefulWidget {
 }
 
 class _MyTitlesState extends State<MyTitles> {
-  DateTime? _selectedDate;
   bool _isLoading = false;
 
   Future<void> _pickBirthday(BuildContext context, AuthProvider auth) async {
@@ -30,9 +29,6 @@ class _MyTitlesState extends State<MyTitles> {
     );
 
     if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
 
       var formatted =
           "${picked.day.toString().padLeft(2, '0')}.${picked.month.toString().padLeft(2, '0')}.${picked.year}";

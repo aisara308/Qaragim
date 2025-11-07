@@ -1,4 +1,10 @@
-final url = 'http://localhost:3000/';
+final url = 'http://10.67.246.155:3000/';
 final registration = url + 'registration';
 final login = url + 'login';
 final birthday = url + 'birthday';
+final updateUser = url+'update';
+final resetpassword = url+'reset-password';
+final deleteaccount=url+'delete-user';
+final getNovels = url+'novels';
+final addUserNovel=url+'add-user-novel';
+final getUserNovels=url+'user-novels';

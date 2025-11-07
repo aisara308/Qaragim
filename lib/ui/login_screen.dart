@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:qaragim/config.dart';
 import 'package:qaragim/ui/home_page.dart';
+import 'package:qaragim/ui/reset_password_screen.dart';
 import 'auth_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:qaragim/ui/register_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,15 +16,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  bool _isNotValidate = false;
   String? errorMessage = '';
   bool _obscure = true;
 
   Future<bool> loginUser() async {
-    if (emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
+    if (_formKey.currentState!.validate()) {
       var regBody = {
         "email": emailController.text,
         "password": passwordController.text,
@@ -37,6 +39,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (responce.statusCode == 200) {
         var myToken = jsonResponce['token'];
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', myToken);
+
         context.read<AuthProvider>().setToken(myToken);
 
         Navigator.pushReplacement(
@@ -50,19 +56,35 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         return false;
       }
-    } else {
-      setState(() {
-        _isNotValidate = true;
-      });
-      return false;
     }
+    return false;
   }
 
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Поштаны енгізіңіз";
+    }
+    String pattern = r'^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$';
+    if (!RegExp(pattern).hasMatch(value.trim())) {
+      return "Дұрыс поштаны енгізіңіз";
+    }
+
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Құпиясөзді енгізіңіз";
+    }
+    if (value.length < 8) {
+      return "Құпиясөз кемінде 8 таңбадан тұруы керек";
+    }
+    String pattern =
+        r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^(){}[\]<>.,;:~`+=_-]).{8,}$';
+    if (!RegExp(pattern).hasMatch(value)) {
+      return "Кемінде 1 әріп, 1 сан және 1 арнайы символ болуы керек";
+    }
+    return null;
   }
 
   @override
@@ -72,168 +94,191 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text(
-                "Кіру",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromRGBO(48, 37, 62, 1),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              const Text(
-                "Бізге қосылып, қазақ ертегілерін\nөз басыңыздан кешіп өтіңіз",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color.fromRGBO(48, 37, 62, 1),
-                ),
-              ),
-              const SizedBox(height: 40),
-
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(
-                    Icons.email,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  "Кіру",
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
                     color: Color.fromRGBO(48, 37, 62, 1),
                   ),
-                  labelText: "Пошта",
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  errorStyle: TextStyle(color: Colors.white),
-                  errorText: _isNotValidate
-                      ? "Дұрыс пошта мекенжайын енгізіңіз"
-                      : null,
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 12),
 
-              TextField(
-                controller: passwordController,
-                obscureText: _obscure,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(
-                    Icons.lock,
+                const Text(
+                  "Бізге қосылып, қазақ ертегілерін\nөз басыңыздан кешіп өтіңіз",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
                     color: Color.fromRGBO(48, 37, 62, 1),
                   ),
-                  labelText: "Құпиясөз",
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  errorStyle: TextStyle(color: Colors.white),
-                  errorText: _isNotValidate ? "Дұрыс құпиясөз енгізіңіз" : null,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      color: Color.fromARGB(194, 60, 57, 103),
-                      _obscure ? Icons.visibility : Icons.visibility_off,
+                ),
+                const SizedBox(height: 40),
+
+                TextFormField(
+                  controller: emailController,
+                  validator: _validateEmail,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.email,
+                      color: Color.fromRGBO(48, 37, 62, 1),
                     ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                    color: Color.fromARGB(194, 60, 57, 103),
+                    labelText: "Пошта",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
+                const SizedBox(height: 20),
 
-              SizedBox(
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        backgroundColor: const Color.fromRGBO(48, 37, 62, 1),
-                        foregroundColor: Colors.white,
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: _obscure,
+                  validator: _validatePassword,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.lock,
+                      color: Color.fromRGBO(48, 37, 62, 1),
+                    ),
+                    labelText: "Құпиясөз",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        color: Color.fromARGB(194, 60, 57, 103),
+                        _obscure ? Icons.visibility : Icons.visibility_off,
                       ),
-                      onPressed: () async {
-                        await loginUser();
-                      },
-                      child: const Text("Кіру", style: TextStyle(fontSize: 18)),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                      color: Color.fromARGB(194, 60, 57, 103),
                     ),
-                    const SizedBox(height: 40),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Divider(
-                            thickness: 1,
-                            color: Color.fromRGBO(60, 57, 103, 1),
+                  ),
+                ),
+                const SizedBox(height: 30),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
+                          backgroundColor: const Color.fromRGBO(48, 37, 62, 1),
+                          foregroundColor: Colors.white,
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(
-                            "немесе",
-                            style: TextStyle(
-                              color: Color.fromRGBO(60, 57, 103, 1),
+                        onPressed: () async {
+                          await loginUser();
+                        },
+                        child: const Text(
+                          "Кіру",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ResetPasswordScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Құпиясөзді ұмыттыңыз ба?",
+                              style: TextStyle(
+                                color: Color.fromRGBO(48, 37, 62, 1),
+                              ),
                             ),
                           ),
-                        ),
-                        const Expanded(
-                          child: Divider(
-                            thickness: 1,
-                            color: Color.fromRGBO(60, 57, 103, 1),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.grey),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 20,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
+                        ],
                       ),
-                      label: const Text(
-                        "Google арқылы кіру",
-                        style: TextStyle(color: Colors.black),
+                      const SizedBox(height: 40),
+                      // Row(
+                      //   children: [
+                      //     const Expanded(
+                      //       child: Divider(
+                      //         thickness: 1,
+                      //         color: Color.fromRGBO(60, 57, 103, 1),
+                      //       ),
+                      //     ),
+                      //     const Padding(
+                      //       padding: EdgeInsets.symmetric(horizontal: 10),
+                      //       child: Text(
+                      //         "немесе",
+                      //         style: TextStyle(
+                      //           color: Color.fromRGBO(60, 57, 103, 1),
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     const Expanded(
+                      //       child: Divider(
+                      //         thickness: 1,
+                      //         color: Color.fromRGBO(60, 57, 103, 1),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                      // const SizedBox(height: 40),
+                      // OutlinedButton.icon(
+                      //   style: OutlinedButton.styleFrom(
+                      //     backgroundColor: Colors.white,
+                      //     side: const BorderSide(color: Colors.grey),
+                      //     padding: const EdgeInsets.symmetric(
+                      //       vertical: 12,
+                      //       horizontal: 20,
+                      //     ),
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(15),
+                      //     ),
+                      //   ),
+                      //   label: const Text(
+                      //     "Google арқылы кіру",
+                      //     style: TextStyle(color: Colors.black),
+                      //   ),
+                      //   icon: Image.asset(
+                      //     '../assets/images/google.png',
+                      //     width: 30,
+                      //   ),
+                      //   onPressed: () {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (context) => const HomeOverlay(),
+                      //       ),
+                      //     );
+                      //   },
+                      // ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text("Аккаунтыңыз жоқ па?"),
                       ),
-                      icon: Image.asset(
-                        '../assets/images/google.png',
-                        width: 30,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeOverlay(),
-                          ),
-                        );
-                      },
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text("Аккаунтыңыз жоқ па?"),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

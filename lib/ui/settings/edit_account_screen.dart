@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:qaragim/ui/home_page.dart';
-import 'package:qaragim/ui/settings/edit_item.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:qaragim/ui/reset_password_screen.dart';
+import 'dart:convert';
+
+import 'edit_item.dart';
 import '../auth_provider.dart';
+import 'package:qaragim/config.dart';
 
 class EditAccountScreen extends StatefulWidget {
   const EditAccountScreen({super.key});
@@ -17,12 +21,108 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   late TextEditingController nameController;
   late TextEditingController emailController;
 
+  bool _isUpdating = false;
+
   @override
   void initState() {
     super.initState();
     final auth = Provider.of<AuthProvider>(context, listen: false);
     nameController = TextEditingController(text: auth.name ?? '');
     emailController = TextEditingController(text: auth.email ?? '');
+  }
+
+  Future<void> _updateAccount(AuthProvider auth) async {
+    final newName = nameController.text.trim();
+    final newEmail = emailController.text.trim();
+
+    if (newName == auth.name && newEmail == auth.email) {
+      Navigator.pop(context);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isUpdating = true);
+
+    try {
+      final responce = await http.put(
+        Uri.parse(updateUser),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${auth.token}',
+        },
+        body: jsonEncode({'name': newName, 'email': newEmail}),
+      );
+
+      if (!mounted) return;
+      setState(() => _isUpdating = false);
+
+      if (responce.statusCode == 200) {
+        final data = jsonDecode(responce.body);
+
+        if (data['token'] != null) {
+          auth.setToken(data['token']);
+        }
+
+        auth.setName(data['user']['name']);
+        auth.setEmail(data['user']['email']);
+
+        if (mounted) Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Қате: ${responce.body}")));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUpdating = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Желі қатесі: $e")));
+    }
+  }
+
+  Future<void> _pickBirthday(BuildContext context, AuthProvider auth) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2008),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+      locale: const Locale('kk', 'KZ'),
+    );
+
+    if (picked != null) {
+      var formatted =
+          "${picked.day.toString().padLeft(2, '0')}.${picked.month.toString().padLeft(2, '0')}.${picked.year}";
+      await _sendBirthday(auth, formatted);
+    }
+  }
+
+  Future<void> _sendBirthday(AuthProvider auth, String birthdayDate) async {
+    try {
+      var response = await http.put(
+        Uri.parse(birthday),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${auth.token}',
+        },
+        body: jsonEncode({'birthday': birthdayDate}),
+      );
+
+      if (response.statusCode == 200) {
+        auth.setBirthday(birthdayDate);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Birthday date saved")));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error while saving the birthday date")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Network error: ${e}")));
+    }
   }
 
   @override
@@ -50,12 +150,9 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
           Padding(
             padding: EdgeInsets.only(right: 10),
             child: IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomeOverlay()),
-                );
-              },
+              onPressed: _isUpdating
+                  ? null
+                  : () => _updateAccount(authProvider),
               style: IconButton.styleFrom(
                 backgroundColor: Color.fromRGBO(99, 136, 114, 1),
                 shape: RoundedRectangleBorder(
@@ -92,24 +189,23 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                       radius: 50,
                       backgroundImage: AssetImage('assets/images/avatar.png'),
                     ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        "Сурет қосу",
-                        style: TextStyle(
-                          color: Color.fromRGBO(48, 37, 62, 1),
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
+                    // TextButton(
+                    //   onPressed: () {},
+                    //   child: const Text(
+                    //     "Сурет қосу",
+                    //     style: TextStyle(
+                    //       color: Color.fromRGBO(48, 37, 62, 1),
+                    //       decoration: TextDecoration.underline,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
+              SizedBox(height: 20),
               EditItem(
                 widget: TextField(
-                  controller: TextEditingController(
-                    text: authProvider.name ?? '',
-                  ),
+                  controller: nameController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: "Аты",
@@ -163,19 +259,83 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                 title: "Гендер",
               ),
               const SizedBox(height: 40),
-              EditItem(widget: TextField(), title: "Жас"),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      "Жас",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: const Color.fromARGB(255, 107, 106, 106),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 40),
+                  Expanded(
+                    flex: 5,
+                    child: authProvider.age != null
+                        ? Text(authProvider.age.toString())
+                        : Row(
+                            children: [
+                              Text("Белгісіз"),
+                              TextButton(
+                                onPressed: () =>
+                                    _pickBirthday(context, authProvider),
+                                child: const Text(
+                                  "(Туған күн қосу)",
+                                  style: TextStyle(
+                                    color: Color.fromRGBO(48, 37, 62, 1),
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 40),
               EditItem(
                 widget: TextField(
-                  controller: TextEditingController(
-                    text: authProvider.email ?? '',
-                  ),
+                  controller: emailController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: "Электрондық пошта",
                   ),
                 ),
                 title: "Пошта",
+              ),
+              const SizedBox(height: 40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ResetPasswordScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      "Құпиясөзді өзгерту",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromRGBO(99, 136, 114, 1),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

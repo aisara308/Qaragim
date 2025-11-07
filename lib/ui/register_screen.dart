@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:qaragim/config.dart';
 import 'package:qaragim/ui/home_page.dart';
 import 'package:qaragim/ui/login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'auth_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -42,6 +43,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (responce.statusCode == 200) {
         var myToken = jsonResponce['token'];
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', myToken);
+
         context.read<AuthProvider>().setToken(myToken);
 
         Navigator.pushReplacement(
@@ -70,28 +75,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return "Enter the name";
+      return "Атыңызды енгізіңіз";
+    }
+    if (value.trim().length < 2) {
+      return "Атыңыз тым қысқа";
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return "Enter email";
+      return "Поштаны енгізіңіз";
     }
-    String pattern = r'^[^@]+@[^@]+\.[^@]+';
+    String pattern = r'^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$';
     if (!RegExp(pattern).hasMatch(value.trim())) {
-      return "Enter proper email";
+      return "Дұрыс поштаны енгізіңіз";
     }
+
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return "Enter the password";
+      return "Құпиясөзді енгізіңіз";
     }
-    if (value.length < 6) {
-      return "Password is too short";
+    if (value.length < 8) {
+      return "Құпиясөз кемінде 8 таңбадан тұруы керек";
+    }
+    String pattern =
+        r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^(){}[\]<>.,;:~`+=_-]).{8,}$';
+    if (!RegExp(pattern).hasMatch(value)) {
+      return "Кемінде 1 әріп, 1 сан және 1 арнайы символ болуы керек";
     }
     return null;
   }
@@ -220,56 +234,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Divider(
-                        thickness: 1,
-                        color: Color.fromRGBO(48, 37, 62, 1),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        "немесе",
-                        style: TextStyle(color: Color.fromRGBO(48, 37, 62, 1)),
-                      ),
-                    ),
-                    const Expanded(
-                      child: Divider(
-                        thickness: 1,
-                        color: Color.fromRGBO(48, 37, 62, 1),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.grey),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 20,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  label: const Text(
-                    "Google арқылы тіркелу",
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  icon: Image.asset('../assets/images/google.png', width: 30),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeOverlay(),
-                      ),
-                    );
-                  },
-                ),
+                // Row(
+                //   children: [
+                //     const Expanded(
+                //       child: Divider(
+                //         thickness: 1,
+                //         color: Color.fromRGBO(48, 37, 62, 1),
+                //       ),
+                //     ),
+                //     const Padding(
+                //       padding: EdgeInsets.symmetric(horizontal: 10),
+                //       child: Text(
+                //         "немесе",
+                //         style: TextStyle(color: Color.fromRGBO(48, 37, 62, 1)),
+                //       ),
+                //     ),
+                //     const Expanded(
+                //       child: Divider(
+                //         thickness: 1,
+                //         color: Color.fromRGBO(48, 37, 62, 1),
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                // const SizedBox(height: 40),
+                // OutlinedButton.icon(
+                //   style: OutlinedButton.styleFrom(
+                //     backgroundColor: Colors.white,
+                //     side: const BorderSide(color: Colors.grey),
+                //     padding: const EdgeInsets.symmetric(
+                //       vertical: 12,
+                //       horizontal: 20,
+                //     ),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(15),
+                //     ),
+                //   ),
+                //   label: const Text(
+                //     "Google арқылы тіркелу",
+                //     style: TextStyle(color: Colors.black),
+                //   ),
+                //   icon: Image.asset('../assets/images/google.png', width: 30),
+                //   onPressed: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const HomeOverlay(),
+                //       ),
+                //     );
+                //   },
+                // ),
 
                 TextButton(
                   onPressed: () {

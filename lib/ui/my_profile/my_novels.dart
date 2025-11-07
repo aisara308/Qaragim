@@ -17,7 +17,6 @@ class MyNovels extends StatefulWidget {
 }
 
 class _MyNovelsState extends State<MyNovels> {
-  DateTime? _selectedDate;
   bool _isLoading = false;
 
   Future<void> _pickBirthday(BuildContext context, AuthProvider auth) async {
@@ -31,7 +30,6 @@ class _MyNovelsState extends State<MyNovels> {
 
     if (picked != null) {
       setState(() {
-        _selectedDate = picked;
       });
 
       var formatted =
