@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:qaragim/api_client.dart';
 import 'package:qaragim/config.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -15,7 +15,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+  late ApiClient api;
   bool isVerified = false;
   bool _obscure = true;
 
@@ -78,12 +78,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     };
 
     try {
-      var responce = await http.put(
-        Uri.parse(resetpassword),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      );
-
+      var responce = await api.put(resetpassword, context, body);
       var jsonResponce = jsonDecode(responce.body);
 
       if (responce.statusCode == 200) {
@@ -101,6 +96,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text("Қате орын алды: $e")));
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    api = ApiClient();
   }
 
   @override

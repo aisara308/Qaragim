@@ -10,9 +10,11 @@ exports.register = async(req, res, next)=>{
 
         let tokenData = {_id: user._id, email: user.email, name: user.name, birthday: user.birthday||null}
 
-        const token = await UserService.generateToken(tokenData,process.env.JWT_SECRET|| "secret_key",process.env.JWT_EXPIRE || "10h")
+        const token = await UserService.generateToken(tokenData,process.env.JWT_SECRET|| "secret_key",process.env.JWT_EXPIRE || "1h")
 
-        res.status(200).json({status:true, token:token, success: "User registered succesfully."}) 
+        const refreshToken = await UserService.generateToken(tokenData,process.env.JWT_SECRET|| "secret_key", "30d")
+
+        res.status(200).json({status:true, token:token,refreshToken:refreshToken}) 
     }catch(error){
         throw error;
     }
@@ -33,68 +35,55 @@ exports.login = async(req,res,next)=>{
             throw new Error("Password InValid");
         }
 
-        let tokenData={_id:user._id, email: user.email, name: user.name, birthday: user.birthday||null}
+        let tokenData={_id:user._id, email: user.email, name: user.name, birthday: user.birthday||null, gender: user.gender||null}
 
-        const token = await UserService.generateToken(tokenData, process.env.JWT_SECRET|| "secret_key", process.env.JWT_EXPIRE || "10h")
+        const token = await UserService.generateToken(tokenData, process.env.JWT_SECRET|| "secret_key", process.env.JWT_EXPIRE || "1h")
 
-        res.status(200).json({status:true, token: token})
+        const refreshToken = await UserService.generateToken(tokenData,process.env.JWT_SECRET|| "secret_key", "30d")
+
+        res.status(200).json({status:true, token: token,refreshToken:refreshToken})
     }catch(error){
         throw error;
     }
 }
 
-exports.enterbirthday = async(req,res,next)=>{
+exports.refreshToken=async(req,res)=>{
     try{
-        const authHeader = req.headers.authorization;
-        if(!authHeader){
-            return res.status(401).json({message: 'No token'});
+        const {refreshToken} = req.body;
+
+        if(!refreshToken){
+            return res.status(401).json({message:"No refresh token"})
         }
 
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET||process.env.JWT_SECRET|| "secret_key");
+        const decoded=jwt.verify(
+            refreshToken, 
+            process.env.JWT_SECRET || "secret_key"
+        )
 
-        const email = decoded.email;
-        if(!email){
-            return res.status(400).json({message: 'Email not found'});
+        const user = await UserModel.findById(decoded._id);
+        if(!user){
+            return res.status(404).json({message:"User not found"});
         }
 
-        const {birthday} = req.body;
-        if(!birthday){
-        return res.status(400).json({message: 'Enter birtday'});
-        }
+        const tokenData={
+            _id:user._id,
+            email:user.email,
+            name:user.name,
+            birthday:user.birthday||null,
+            gender: user.gender||null
+        };
 
-        const updatedUser = await UserModel.findOneAndUpdate(
-            {email},
-            {birthday},
-            {new: true}
-        );
-
-        if(!updatedUser){
-            return res.status(404).json({message: 'No user'});
-        }
-
-        const newToken = await UserService.generateToken(
-        {
-            _id: updatedUser._id,
-            email: updatedUser.email,
-            name: updatedUser.name,
-            birthday: updatedUser.birthday || null,
-        },
-            process.env.JWT_SECRET || "secret_key",
-            process.env.JWT_EXPIRE || "10h"
-        );
+        const newToken = await UserService.generateToken(tokenData,process.env.JWT_SECRET || "secret_key",
+            process.env.JWT_EXPIRE || "1h");
 
         res.status(200).json({
-            message: 'birthday added succesfully',
-            token: newToken,
-            user: {
-                name: updatedUser.name,
-                email:updatedUser.email,
-                birthday:updatedUser.birthday
-            }
+            status:true,
+            token:newToken
         });
-    }catch(error){
-        throw error;
+    }catch(e){
+        return res.status(401).json({
+            message: "Invalid or expired refresh token"
+        });   
     }
 }
  exports.updateAccount= async (req,res,next)=>{
@@ -112,9 +101,9 @@ exports.enterbirthday = async(req,res,next)=>{
             return res.status(400).json({message:'User ID not found'});
         }
 
-        const {name, email, birthday}=req.body;
+        const {name, email, birthday, gender}=req.body;
 
-        if(!name&&!email&&!birthday){
+        if(!name&&!email&&!birthday&&!gender){
             return res.status(400).json({message:'Nothing to update'});
         }
 
@@ -122,6 +111,7 @@ exports.enterbirthday = async(req,res,next)=>{
         if(name) updateData.name=name;
         if(email) updateData.email=email;
         if(birthday) updateData.birthday=birthday;
+        if(gender) updateData.gender=gender;
 
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
@@ -138,6 +128,7 @@ exports.enterbirthday = async(req,res,next)=>{
             email: updatedUser.email,
             name: updatedUser.name,
             birthday: updatedUser.birthday || null,
+            gender: updatedUser.gender||null
         },
             process.env.JWT_SECRET || "secret_key",
             process.env.JWT_EXPIRE || "10h"
@@ -150,7 +141,8 @@ exports.enterbirthday = async(req,res,next)=>{
             user: {
                 name: updatedUser.name,
                 email: updatedUser.email,
-                birthday: updatedUser.birthday||null
+                birthday: updatedUser.birthday||null,
+                gender: updatedUser.gender||null
             }
         });
     }catch(error){

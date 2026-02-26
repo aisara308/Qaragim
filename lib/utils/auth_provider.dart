@@ -9,11 +9,13 @@ class AuthProvider extends ChangeNotifier {
   String? _email;
   String? _name;
   String? _birthday;
+  String? _gender;
 
   String? get token => _token;
   String? get email => _email;
   String? get name => _name;
   String? get birthday => _birthday;
+  String? get gender=>_gender;
 
   Future<void> loadTokenFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -69,10 +71,12 @@ class AuthProvider extends ChangeNotifier {
       _email = decoded['email'];
       _name = decoded['name'];
       _birthday = decoded['birthday'];
+      _gender=decoded['gender'];
     } catch (e) {
       _email = null;
       _name = null;
       _birthday = null;
+      _gender=null;
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
@@ -92,6 +96,11 @@ class AuthProvider extends ChangeNotifier {
 
   void setEmail(String email) {
     _email = email;
+    notifyListeners();
+  }
+
+  void setGender(String gender) {
+    _gender = gender;
     notifyListeners();
   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:qaragim/ui/settings/forward_button.dart';
+import 'package:qaragim/utils/forward_button.dart';
 
 class SettingsItem extends StatelessWidget {
   const SettingsItem({

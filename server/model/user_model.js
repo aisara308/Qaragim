@@ -25,6 +25,14 @@ const userSchema = new Schema({
         required: false,
         default:null
     },
+    gender: {
+        type: String,
+        enum: ['Ұл', 'Қыз', 'Басқа']
+    },
+    avatar: {
+        type: String,
+        default: null
+    },
     userNovels: [
         {
             type: mongoose.Schema.Types.ObjectId,

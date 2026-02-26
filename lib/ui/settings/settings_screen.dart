@@ -3,12 +3,10 @@ import 'package:ionicons/ionicons.dart';
 import 'package:qaragim/ui/login_screen.dart';
 import 'package:qaragim/ui/my_profile/my_profile_screen.dart';
 import 'package:qaragim/ui/settings/edit_account_screen.dart';
-import 'package:qaragim/ui/settings/settings_item.dart';
-// import 'package:qaragim/ui/settings/settings_switch.dart';
-// import '../icon_widget.dart';
-import './forward_button.dart';
+import 'package:qaragim/utils/settings_item.dart';
+import '../../utils/forward_button.dart';
 import 'package:provider/provider.dart';
-import '../auth_provider.dart';
+import '../../utils/auth_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {

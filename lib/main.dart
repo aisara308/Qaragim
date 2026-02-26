@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:qaragim/ui/home_page.dart';
 import 'package:qaragim/ui/login_screen.dart';
 import 'package:provider/provider.dart';
-import './ui/auth_provider.dart';
+import 'utils/auth_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:qaragim/ui/home_page.dart';
-
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   final authProvider = AuthProvider();
@@ -27,7 +26,7 @@ class MainApp extends StatelessWidget {
     String? token = prefs.getString('token');
 
     if (token != null && token.isNotEmpty) {
-      return HomeOverlay();
+      return HomePage(mode: NovelMode.user);
     } else {
       return const LoginScreen();
     }

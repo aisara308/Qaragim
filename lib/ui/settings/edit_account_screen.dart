@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
+import 'package:qaragim/api_client.dart';
 import 'package:qaragim/ui/reset_password_screen.dart';
 import 'dart:convert';
 
-import 'edit_item.dart';
-import '../auth_provider.dart';
+import '../../utils/edit_item.dart';
+import '../../utils/auth_provider.dart';
 import 'package:qaragim/config.dart';
 
 class EditAccountScreen extends StatefulWidget {
@@ -17,9 +17,10 @@ class EditAccountScreen extends StatefulWidget {
 }
 
 class _EditAccountScreenState extends State<EditAccountScreen> {
-  String gender = "Қыз";
+  String? gender = "";
   late TextEditingController nameController;
   late TextEditingController emailController;
+  late ApiClient api;
 
   bool _isUpdating = false;
 
@@ -29,13 +30,18 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     nameController = TextEditingController(text: auth.name ?? '');
     emailController = TextEditingController(text: auth.email ?? '');
+    gender = auth.gender ?? "";
+    api = ApiClient();
   }
 
   Future<void> _updateAccount(AuthProvider auth) async {
     final newName = nameController.text.trim();
     final newEmail = emailController.text.trim();
+    final newGender = gender;
 
-    if (newName == auth.name && newEmail == auth.email) {
+    if (newName == auth.name &&
+        newEmail == auth.email &&
+        newGender == auth.gender) {
       Navigator.pop(context);
       return;
     }
@@ -44,15 +50,11 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     setState(() => _isUpdating = true);
 
     try {
-      final responce = await http.put(
-        Uri.parse(updateUser),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${auth.token}',
-        },
-        body: jsonEncode({'name': newName, 'email': newEmail}),
-      );
-
+      final responce = await api.put(updateUser, context, {
+        'name': newName,
+        'email': newEmail,
+        'gender': gender,
+      });
       if (!mounted) return;
       setState(() => _isUpdating = false);
 
@@ -65,6 +67,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
         auth.setName(data['user']['name']);
         auth.setEmail(data['user']['email']);
+        auth.setGender(data['user']['gender']);
 
         if (mounted) Navigator.pop(context);
       } else {
@@ -99,14 +102,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
   Future<void> _sendBirthday(AuthProvider auth, String birthdayDate) async {
     try {
-      var response = await http.put(
-        Uri.parse(birthday),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${auth.token}',
-        },
-        body: jsonEncode({'birthday': birthdayDate}),
-      );
+      final body = jsonEncode({'birthday': birthdayDate});
+      var response = await api.put(updateUser, context, body);
 
       if (response.statusCode == 200) {
         auth.setBirthday(birthdayDate);
@@ -215,19 +212,20 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
               ),
               const SizedBox(height: 40),
               EditItem(
+                title: "Гендер",
                 widget: Row(
                   children: [
                     IconButton(
-                      onPressed: () {
-                        setState(() {
-                          gender = "Қыз";
-                        });
-                      },
-                      style: IconButton.styleFrom(
-                        backgroundColor: gender == "Қыз"
-                            ? Colors.pinkAccent
-                            : Colors.grey.shade200,
-                        fixedSize: const Size(50, 50),
+                      onPressed: () => setState(() => gender = "Қыз"),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(
+                          gender == "Қыз"
+                              ? Colors.pinkAccent
+                              : Colors.grey.shade200,
+                        ),
+                        fixedSize: MaterialStateProperty.all(
+                          const Size(50, 50),
+                        ),
                       ),
                       icon: Icon(
                         Ionicons.female,
@@ -237,16 +235,16 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                     ),
                     const SizedBox(width: 20),
                     IconButton(
-                      onPressed: () {
-                        setState(() {
-                          gender = "Ұл";
-                        });
-                      },
-                      style: IconButton.styleFrom(
-                        backgroundColor: gender == "Ұл"
-                            ? Colors.deepPurple
-                            : Colors.grey.shade200,
-                        fixedSize: const Size(50, 50),
+                      onPressed: () => setState(() => gender = "Ұл"),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(
+                          gender == "Ұл"
+                              ? Colors.deepPurple
+                              : Colors.grey.shade200,
+                        ),
+                        fixedSize: MaterialStateProperty.all(
+                          const Size(50, 50),
+                        ),
                       ),
                       icon: Icon(
                         Ionicons.male,
@@ -254,9 +252,27 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                         size: 18,
                       ),
                     ),
+                    const SizedBox(width: 20),
+                    IconButton(
+                      onPressed: () => setState(() => gender = "Басқа"),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(
+                          gender == "Басқа"
+                              ? Colors.blueGrey
+                              : Colors.grey.shade200,
+                        ),
+                        fixedSize: MaterialStateProperty.all(
+                          const Size(50, 50),
+                        ),
+                      ),
+                      icon: Icon(
+                        Ionicons.person,
+                        color: gender == "Басқа" ? Colors.white : Colors.black,
+                        size: 18,
+                      ),
+                    ),
                   ],
                 ),
-                title: "Гендер",
               ),
               const SizedBox(height: 40),
               Row(

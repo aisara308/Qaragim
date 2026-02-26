@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:qaragim/api_client.dart';
 import 'package:qaragim/config.dart';
 import 'package:qaragim/ui/home_page.dart';
 import 'package:qaragim/ui/reset_password_screen.dart';
-import 'auth_provider.dart';
-import 'package:http/http.dart' as http;
+import '../utils/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:qaragim/ui/register_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,35 +22,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? errorMessage = '';
   bool _obscure = true;
-
+  late ApiClient api;
   Future<bool> loginUser() async {
     if (_formKey.currentState!.validate()) {
       var regBody = {
         "email": emailController.text,
         "password": passwordController.text,
       };
-      var responce = await http.post(
-        Uri.parse(login),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(regBody),
-      );
-      var jsonResponce = jsonDecode(responce.body);
-      print(jsonResponce);
+      var responce = await api.post(login, context,regBody);
 
       if (responce.statusCode == 200) {
+        var jsonResponce = jsonDecode(responce.body);
         var myToken = jsonResponce['token'];
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', myToken);
+        await prefs.setString('token', jsonResponce['token']);
+        await prefs.setString('refreshToken', jsonResponce['refreshToken']);
 
         context.read<AuthProvider>().setToken(myToken);
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeOverlay()),
+          MaterialPageRoute(builder: (context) => HomePage(mode: NovelMode.user)),
         );
         return true;
       } else {
+        print(responce.body);
         setState(() {
           errorMessage = "Login error: ${responce.body}";
         });
@@ -85,6 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
       return "Кемінде 1 әріп, 1 сан және 1 арнайы символ болуы керек";
     }
     return null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    api = ApiClient();
   }
 
   @override

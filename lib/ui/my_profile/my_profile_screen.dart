@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:qaragim/ui/home_page.dart';
 import 'package:qaragim/ui/my_profile/my_achievments.dart';
-import 'package:qaragim/ui/settings/edit_account_screen.dart';
-import '../auth_provider.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:qaragim/config.dart';
+import 'package:qaragim/ui/my_profile/my_novels.dart';
+import 'package:qaragim/ui/my_profile/my_titles.dart';
+import 'package:qaragim/ui/my_profile/profile_header.dart';
 
 class MyProfileScreen extends StatefulWidget {
   const MyProfileScreen({super.key});
 
   @override
-  State<MyProfileScreen> createState() => _MyProfileScreenState();
+  State<MyProfileScreen> createState() => _MyProfilePageState();
 }
 
-class _MyProfileScreenState extends State<MyProfileScreen> {
+class _MyProfilePageState extends State<MyProfileScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final ProfileService service = ProfileService();
   bool _isLoading = false;
 
-  Future<void> _pickBirthday(BuildContext context, AuthProvider auth) async {
-    final DateTime? picked = await showDatePicker(
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  Future<void> _pickBirthday() async {
+    final picked = await showDatePicker(
       context: context,
       initialDate: DateTime(2008),
       firstDate: DateTime(1950),
@@ -28,164 +33,86 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     );
 
     if (picked != null) {
-      var formatted =
+      final formatted =
           "${picked.day.toString().padLeft(2, '0')}.${picked.month.toString().padLeft(2, '0')}.${picked.year}";
-      await _sendBirthday(auth, formatted);
-    }
-  }
-
-  Future<void> _sendBirthday(AuthProvider auth, String birthdayDate) async {
-    setState(() => _isLoading = true);
-
-    try {
-      var response = await http.put(
-        Uri.parse(birthday),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${auth.token}',
-        },
-        body: jsonEncode({'birthday': birthdayDate}),
+      final confirmed = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            "Таңдауыңызды растаңыз",
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.normal,
+              ),
+              children: [
+                const TextSpan(text: "Сіздің туған күніңіз: "),
+                TextSpan(
+                  text: formatted,
+                  style: const TextStyle(color: Colors.red),
+                ),
+                const TextSpan(
+                  text: "\nРастаудан кейін таңдауды өзгертуге болмайды",
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Жоқ', style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Иә', style: TextStyle(color: Colors.green)),
+            ),
+          ],
+        ),
       );
+      if (confirmed != true) return;
 
-      setState(() => _isLoading = false);
+      setState(() => _isLoading = true);
 
-      if (response.statusCode == 200) {
-        auth.setBirthday(birthdayDate);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Birthday date saved")));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error while saving the birthday date")),
-        );
-      }
-    } catch (e) {
+      await service.updateBirthday(context, formatted);
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Network error: ${e}")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
     return Scaffold(
-      backgroundColor: Color.fromRGBO(148, 199, 180, 1),
+      backgroundColor: const Color.fromRGBO(148, 199, 180, 1),
       body: Column(
         children: [
-          Align(
-            alignment: Alignment.topLeft,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HomeOverlay(),
-                        ),
-                      );
-                    },
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: Color.fromRGBO(48, 37, 62, 1),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: AssetImage('assets/images/avatar.png'),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                auth.name ?? "no name",
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  color: Color.fromRGBO(48, 37, 62, 1),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const EditAccountScreen(),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(
-                                  Icons.edit,
-                                  color: Color.fromRGBO(48, 37, 62, 1),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            auth.email ?? "no email",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color.fromRGBO(48, 37, 62, 0.5),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.cake,
-                                size: 19.0,
-                                color: Color.fromRGBO(48, 37, 62, 1),
-                              ),
-                              const SizedBox(width: 1),
-                              if (_isLoading)
-                                const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              else if (auth.birthday != null &&
-                                  auth.birthday!.isNotEmpty)
-                                Text(
-                                  auth.birthday!,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: Color.fromRGBO(48, 37, 62, 1),
-                                  ),
-                                )
-                              else
-                                TextButton(
-                                  onPressed: () => _pickBirthday(context, auth),
-                                  child: const Text(
-                                    "Туған күн қосу",
-                                    style: TextStyle(
-                                      color: Color.fromRGBO(48, 37, 62, 1),
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+          ProfileHeader(onPickBirthday: _pickBirthday, isLoading: _isLoading),
+
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: "Жетістіктер"),
+              Tab(text: "Новеллалар"),
+              Tab(text: "Атақтар"),
+            ],
+          ),
+
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                MyAchievementsTab(),
+                MyNovelsTab(),
+                MyTitlesTab(),
+              ],
             ),
           ),
-          MyAchievments(),
         ],
       ),
     );

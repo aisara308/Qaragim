@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:qaragim/api_client.dart';
 import 'package:qaragim/config.dart';
 import 'package:qaragim/ui/home_page.dart';
 import 'package:qaragim/ui/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_provider.dart';
-import 'package:http/http.dart' as http;
+import '../utils/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? errorMessage = '';
   bool _obscure = true;
-
+  late ApiClient api;
   Future<bool> registerUser() async {
     if (_formKey.currentState!.validate()) {
       var regBody = {
@@ -32,11 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "password": passwordController.text,
       };
 
-      var responce = await http.post(
-        Uri.parse(registration),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(regBody),
-      );
+      var responce = await api.post(registration, context, regBody);
 
       var jsonResponce = jsonDecode(responce.body);
       print(jsonResponce);
@@ -45,13 +41,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         var myToken = jsonResponce['token'];
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', myToken);
+        await prefs.setString('token', jsonResponce['token']);
+        await prefs.setString('refreshToken', jsonResponce['refreshToken']);
 
         context.read<AuthProvider>().setToken(myToken);
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeOverlay()),
+          MaterialPageRoute(builder: (context) => HomePage(mode: NovelMode.user)),
         );
         return true;
       } else {
@@ -63,6 +60,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       return false;
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    api = ApiClient();
   }
 
   @override
@@ -217,15 +220,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     onPressed: () async {
-                      bool success = await registerUser();
-                      if (success) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeOverlay(),
-                          ),
-                        );
-                      }
+                      await registerUser();
                     },
                     child: const Text(
                       "Tіркелу",
@@ -234,6 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
+
                 // Row(
                 //   children: [
                 //     const Expanded(
@@ -284,7 +280,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 //     );
                 //   },
                 // ),
-
                 TextButton(
                   onPressed: () {
                     Navigator.push(

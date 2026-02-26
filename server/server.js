@@ -9,6 +9,6 @@ app.get('/',(req,res)=>{
     res.send("Hello!")
 });
 
-app.listen(port,'0.0.0.0', ()=>
-    console.log(`Server running on all interfaces`)
-);
+app.listen(port,()=>{
+    console.log(`Server Listening on Port http://localhost:${port}`);
+});
