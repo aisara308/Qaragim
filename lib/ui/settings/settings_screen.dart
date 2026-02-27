@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:qaragim/ui/login_screen.dart';
@@ -130,66 +132,88 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 35,
-                      backgroundImage: AssetImage('assets/images/avatar.png'),
-                    ),
-                    const SizedBox(width: 20),
-                    Column(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              authProvider.name ?? 'No name',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                color: const Color.fromRGBO(48, 37, 62, 1),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const EditAccountScreen(),
-                                  ),
-                                );
-                              },
-                              icon: Icon(
-                                Icons.edit,
-                                color: Color.fromRGBO(48, 37, 62, 1),
-                                size: 22,
-                              ),
-                            ),
-                          ],
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: authProvider.avatarPath != null
+                              ? FileImage(File(authProvider.avatarPath!))
+                              : const AssetImage('assets/images/avatar.png')
+                                    as ImageProvider,
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          authProvider.email ?? 'No email',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: const Color.fromRGBO(48, 37, 62, 0.7),
+
+                        const SizedBox(width: 16),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      authProvider.name ?? 'No name',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color.fromRGBO(48, 37, 62, 1),
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const EditAccountScreen(),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Color.fromRGBO(48, 37, 62, 1),
+                                      size: 22,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 4),
+
+                              Text(
+                                authProvider.email ?? 'No email',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Color.fromRGBO(48, 37, 62, 0.7),
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        forward_button(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MyProfileScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ],
-                    ),
-                    const Spacer(),
-                    forward_button(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MyProfileScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 40),

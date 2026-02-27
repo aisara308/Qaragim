@@ -1,6 +1,7 @@
 const UserService = require('../services/user_services');
 const jwt = require('jsonwebtoken');
 const UserModel= require('../model/user_model')
+const nodemailer = require("nodemailer");
 
 exports.register = async(req, res, next)=>{
     try{
@@ -27,11 +28,13 @@ exports.login = async(req,res,next)=>{
         const user = await UserService.checkUser(email);
 
         if(!user){
+            res.status(404)
             throw new Error("User doesn't exist");
         }
-        const isMatch=user.comparePasswords(password);
-            
-        if(isMatch==false){
+        const isMatch = await user.comparePasswords(password);
+
+        if (!isMatch){
+            res.status(403)
             throw new Error("Password InValid");
         }
 
@@ -149,49 +152,114 @@ exports.refreshToken=async(req,res)=>{
         throw error;
     }
  }
-exports.resetPassword = async (req,res,next)=>{
+
+ exports.changePassword = async (req,res)=>{
     try{
-        const {name,email,newPassword}=req.body;
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret_key");
 
-        if(!name||!email||!newPassword){
-            return res.status(400).json({message: "Please provide name, email and password"})
-        }
-
-        const user = await UserModel.findOne({name,email});
+        const user = await UserModel.findById(decoded._id);
         if(!user){
-            return res.status(404).json({message: "User not found"});
+            return res.status(404).json({message:"User not found"});
         }
 
-        user.password=newPassword;
+        const {oldPassword, newPassword} = req.body;
+
+        if(!oldPassword || !newPassword){
+            return res.status(400).json({message:"Provide old and new password"});
+        }
+
+        const isMatch = await user.comparePasswords(oldPassword);
+
+        if(!isMatch){
+            return res.status(400).json({message:"Old password is incorrect"});
+        }
+
+        user.password = newPassword;
         await user.save();
 
-        const newToken = await UserService.generateToken(
-            {
-                _id: user._id,
-                email: user.email,
-                name: user.name,
-                birthday: user.birthday||null,
-            },
-            process.env.JWT_SECRET||"secret_key",
-            process.env.JWT_EXPIRE||"10h"
-        );
-
-        res.status(200).json({
-            status: true,
-            message: "Password reset succesfully",
-            token: newToken,
-            user:{
-                name: user.name,
-                email: user.email,
-                birthday: user.birthday||null
-            }
+        return res.status(200).json({
+            status:true,
+            message:"Password changed successfully"
         });
-    }catch(error){
-        console.error(error);
-        res.status(500).json({message: "Server error", error: error.message});
+
+    }catch(e){
+        res.status(500).json({message:"Server error"});
     }
 }
+exports.sendResetCode = async (req,res)=>{
+    try{
+        const {email} = req.body;
 
+        const user = await UserModel.findOne({email});
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+
+        const code = Math.floor(100000 + Math.random()*900000).toString();
+
+        user.resetCode = code;
+        user.resetCodeExpire = Date.now() + 10 * 60 * 1000; 
+        await user.save();
+
+        const transporter = nodemailer.createTransport({
+            service:"gmail",
+            auth:{
+                user:process.env.EMAIL_USER ||"mc.dindon1898@gmail.com",
+                pass:process.env.EMAIL_PASS || "ngcrilehifmcraol"
+            }
+        });
+
+        await transporter.sendMail({
+            from:process.env.EMAIL_USER,
+            to:email,
+            subject:"Password reset code",
+            text:`Your reset code is: ${code}`
+        });
+
+        res.status(200).json({
+            status:true,
+            message:"Reset code sent"
+        });
+
+    }catch(e){
+        res.status(500).json({message:"Email error"});
+    }
+}
+exports.verifyResetCode = async (req,res)=>{
+    try{
+        const {email, code, newPassword} = req.body;
+
+        const user = await UserModel.findOne({email});
+
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+
+        if(user.resetCode !== code){
+            return res.status(400).json({message:"Қате немесе ескі код"});
+        }
+
+        if(Date.now() > user.resetCodeExpire){
+            return res.status(400).json({message:"Code expired"});
+        }
+
+        user.password = newPassword;
+        user.resetCode = null;
+        user.resetCodeExpire = null;
+
+        await user.save();
+
+        res.status(200).json({
+            status:true,
+            message:"Password reset successful"
+        });
+
+    }catch(e){
+        res.status(500).json({message:"Server error"});
+    }
+}
 exports.deleteAccount = async (req,res,next)=>{
     try{
         const authHeader = req.headers.authorization;

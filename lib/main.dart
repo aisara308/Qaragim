@@ -5,16 +5,15 @@ import 'package:provider/provider.dart';
 import 'utils/auth_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-void main() async{
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final authProvider = AuthProvider();
   await authProvider.loadTokenFromPrefs();
-  
+  await authProvider.loadAvatar();
+
   runApp(
-    ChangeNotifierProvider.value(
-      value: authProvider,
-      child: const MainApp(),
-    ),
+    ChangeNotifierProvider.value(value: authProvider, child: const MainApp()),
   );
 }
 
@@ -50,15 +49,15 @@ class MainApp extends StatelessWidget {
       ],
       home: FutureBuilder(
         future: _getStartScreen(),
-        builder: (context, snapshot){
-          if(snapshot.connectionState==ConnectionState.waiting){
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );
-          }else{
+          } else {
             return snapshot.data!;
           }
-        }
+        },
       ),
     );
   }

@@ -29,10 +29,8 @@ const userSchema = new Schema({
         type: String,
         enum: ['Ұл', 'Қыз', 'Басқа']
     },
-    avatar: {
-        type: String,
-        default: null
-    },
+    resetCode: { type: String },
+resetCodeExpire: { type: Date },
     userNovels: [
         {
             type: mongoose.Schema.Types.ObjectId,

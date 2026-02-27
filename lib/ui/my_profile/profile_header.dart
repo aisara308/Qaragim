@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -49,7 +50,9 @@ class ProfileHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundImage: AssetImage('assets/images/avatar.png'),
+                backgroundImage: auth.avatarPath != null
+                    ? FileImage(File(auth.avatarPath!))
+                    : AssetImage('assets/images/avatar.png') as ImageProvider,
               ),
               const SizedBox(width: 10),
               Column(

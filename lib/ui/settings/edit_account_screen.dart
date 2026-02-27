@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:qaragim/api_client.dart';
 import 'package:qaragim/ui/reset_password_screen.dart';
@@ -21,6 +26,9 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late ApiClient api;
+  File? _avatarPreview;
+  File? _avatarToSave;
+  final ImagePicker _picker = ImagePicker();
 
   bool _isUpdating = false;
 
@@ -35,6 +43,9 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   }
 
   Future<void> _updateAccount(AuthProvider auth) async {
+    if (_avatarToSave != null) {
+      await _saveAvatarLocally(_avatarToSave!);
+    }
     final newName = nameController.text.trim();
     final newEmail = emailController.text.trim();
     final newGender = gender;
@@ -100,6 +111,20 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     }
   }
 
+  Future<void> _pickAvatar() async {
+    final XFile? picked = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _avatarPreview = File(picked.path);
+        _avatarToSave = File(picked.path);
+      });
+    }
+  }
+
   Future<void> _sendBirthday(AuthProvider auth, String birthdayDate) async {
     try {
       final body = jsonEncode({'birthday': birthdayDate});
@@ -120,6 +145,17 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text("Network error: ${e}")));
     }
+  }
+
+  Future<void> _saveAvatarLocally(File image) async {
+    if (kIsWeb) return;
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/avatar.png');
+
+    await image.copy(file.path);
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    auth.setAvatarPath(file.path);
   }
 
   @override
@@ -184,7 +220,22 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage: AssetImage('assets/images/avatar.png'),
+                      backgroundImage: _avatarPreview != null
+                          ? FileImage(_avatarPreview!)
+                          : authProvider.avatarPath != null
+                          ? FileImage(File(authProvider.avatarPath!))
+                          : AssetImage('assets/images/avatar.png')
+                                as ImageProvider,
+                    ),
+                    TextButton(
+                      onPressed: _pickAvatar,
+                      child: const Text(
+                        "Сурет қосу",
+                        style: TextStyle(
+                          color: Color.fromRGBO(48, 37, 62, 1),
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
                     // TextButton(
                     //   onPressed: () {},
@@ -332,7 +383,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ResetPasswordScreen(),
+                          builder: (context) => const ResetPasswordScreen(fromSettings: true),
                         ),
                       );
                     },

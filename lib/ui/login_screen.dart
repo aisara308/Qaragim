@@ -29,8 +29,17 @@ class _LoginScreenState extends State<LoginScreen> {
         "email": emailController.text,
         "password": passwordController.text,
       };
-      var responce = await api.post(login, context,regBody);
-
+      var responce = await api.post(login, context, regBody);
+      if (responce.statusCode == 404) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Пайдаланушы табылмады")));
+      }
+      if (responce.statusCode == 403) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Қате құпиясөз")));
+      }
       if (responce.statusCode == 200) {
         var jsonResponce = jsonDecode(responce.body);
         var myToken = jsonResponce['token'];
@@ -43,7 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(mode: NovelMode.user)),
+          MaterialPageRoute(
+            builder: (context) => HomePage(mode: NovelMode.user),
+          ),
         );
         return true;
       } else {

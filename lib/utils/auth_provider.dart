@@ -1,5 +1,9 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qaragim/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -10,12 +14,14 @@ class AuthProvider extends ChangeNotifier {
   String? _name;
   String? _birthday;
   String? _gender;
+  String? _avatarPath;
 
   String? get token => _token;
   String? get email => _email;
   String? get name => _name;
   String? get birthday => _birthday;
-  String? get gender=>_gender;
+  String? get gender => _gender;
+  String? get avatarPath => _avatarPath;
 
   Future<void> loadTokenFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -71,12 +77,12 @@ class AuthProvider extends ChangeNotifier {
       _email = decoded['email'];
       _name = decoded['name'];
       _birthday = decoded['birthday'];
-      _gender=decoded['gender'];
+      _gender = decoded['gender'];
     } catch (e) {
       _email = null;
       _name = null;
       _birthday = null;
-      _gender=null;
+      _gender = null;
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
@@ -101,6 +107,11 @@ class AuthProvider extends ChangeNotifier {
 
   void setGender(String gender) {
     _gender = gender;
+    notifyListeners();
+  }
+
+  void setAvatarPath(String path) {
+    _avatarPath = path;
     notifyListeners();
   }
 
@@ -133,6 +144,17 @@ class AuthProvider extends ChangeNotifier {
       return age;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> loadAvatar() async {
+    if (kIsWeb) return;
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/avatar.png');
+
+    if (await file.exists()) {
+      _avatarPath = file.path;
+      notifyListeners();
     }
   }
 }
