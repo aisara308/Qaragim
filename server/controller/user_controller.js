@@ -153,6 +153,75 @@ exports.refreshToken=async(req,res)=>{
     }
  }
 
+ exports.saveProgress = async (req,res)=>{
+    try{
+        const authHeader = req.headers.authorization;
+        if(!authHeader) return res.status(401).json({message:'No token'});
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        const email = decoded.email;
+
+        const { slug, sceneIndex, dialogueIndex } = req.body;
+
+        const user = await UserModel.findOne({email});
+        const novel = await NovelModel.findOne({slug});
+
+        if(!user || !novel) return res.status(404).json({message:'Not found'});
+
+        const existing = user.progress.find(p => p.novel.toString() === novel._id.toString());
+
+        if(existing){
+            existing.sceneIndex = sceneIndex;
+            existing.dialogueIndex = dialogueIndex;
+        }else{
+            user.progress.push({
+                novel: novel._id,
+                sceneIndex,
+                dialogueIndex
+            });
+        }
+
+        await user.save();
+        res.status(200).json({message:'Progress saved'});
+
+    }catch(err){
+        res.status(500).json({message:'Error saving progress'});
+    }
+};
+
+exports.getProgress = async (req,res)=>{
+    try{
+        const authHeader = req.headers.authorization;
+        if(!authHeader) return res.status(401).json({message:'No token'});
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        const email = decoded.email;
+
+        const {slug} = req.params;
+
+        const user = await UserModel.findOne({email});
+        const novel = await NovelModel.findOne({slug});
+
+        if(!user || !novel) return res.status(404).json({message:'Not found'});
+
+        const progress = user.progress.find(p => p.novel.toString() === novel._id.toString());
+
+        if(!progress){
+            return res.status(200).json({
+                sceneIndex:0,
+                dialogueIndex:0
+            });
+        }
+
+        res.status(200).json(progress);
+
+    }catch(err){
+        res.status(500).json({message:'Error getting progress'});
+    }
+};
+
  exports.changePassword = async (req,res)=>{
     try{
         const authHeader = req.headers.authorization;

@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:qaragim/api_client.dart';
+import 'package:qaragim/config.dart';
 
 class NovelPage extends StatefulWidget {
-  final String novelFolder;
-  const NovelPage({super.key, required this.novelFolder});
+  final String novelSlug;
+  const NovelPage({super.key, required this.novelSlug});
 
   @override
   State<NovelPage> createState() => _NovelPageState();
@@ -15,12 +16,14 @@ class _NovelPageState extends State<NovelPage> {
   List scenes = [];
   int sceneIndex = 0;
   int dialogueIndex = 0;
+  late ApiClient api;
 
   Timer? _inactivityTimer;
 
   @override
   void initState() {
     super.initState();
+    api = ApiClient();
     loadScript();
     _startInactivityTimer();
   }
@@ -35,12 +38,41 @@ class _NovelPageState extends State<NovelPage> {
   }
 
   Future<void> loadScript() async {
-    final data = await rootBundle.loadString(
-      'assets/novels/${widget.novelFolder}/script.json',
-    );
-    final jsonResult = jsonDecode(data);
-    setState(() {
-      scenes = jsonResult['scenes'];
+    final response = await api.get("$getScript${widget.novelSlug}", context);
+
+    if (response.statusCode == 200) {
+      final jsonResult = jsonDecode(response.body);
+      await loadProgress();
+      setState(() {
+        scenes = jsonResult['scenes'];
+      });
+    }
+  }
+
+  Future<void> loadProgress() async {
+    final response = await api.get("$getProgress${widget.novelSlug}", context);
+
+    if (response.statusCode == 200) {
+      final jsonResult = jsonDecode(response.body);
+
+      setState(() {
+        sceneIndex = jsonResult['sceneIndex'] ?? 0;
+        dialogueIndex = jsonResult['dialogueIndex'] ?? 0;
+      });
+    }
+  }
+
+  Future<void> saveProgress() async {
+    final regBody = {
+      "slug": widget.novelSlug,
+      "sceneIndex": sceneIndex,
+      "dialogueIndex": dialogueIndex,
+    };
+    print(regBody);
+    await api.post(saveProgressRoute, context, {
+      "slug": widget.novelSlug,
+      "sceneIndex": sceneIndex,
+      "dialogueIndex": dialogueIndex,
     });
   }
 
@@ -59,11 +91,13 @@ class _NovelPageState extends State<NovelPage> {
       }
     });
     _startInactivityTimer();
+    saveProgress();
   }
 
   @override
   void dispose() {
     _inactivityTimer?.cancel();
+    saveProgress();
     super.dispose();
   }
 
@@ -83,18 +117,42 @@ class _NovelPageState extends State<NovelPage> {
         },
         child: Stack(
           children: [
-            Image.asset(
-              'assets/novels/${widget.novelFolder}/bg/${currentScene['background']}',
+            FadeInImage(
+              placeholder: AssetImage('assets/placeholders/bg_placeholder.png'),
+              image: NetworkImage(currentScene['background'] ?? ''),
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
+              imageErrorBuilder: (_, __, ___) {
+                return Image.asset(
+                  'assets/placeholders/bg_placeholder.png',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                );
+              },
             ),
+
             if (currentDialogue['character'] != null)
               Align(
                 alignment: Alignment.bottomCenter,
-                child: Image.asset(
-                  'assets/novels/${widget.novelFolder}/char/${currentDialogue['character']}',
+                child: FadeInImage(
+                  placeholder: const AssetImage(
+                    'assets/placeholders/char_placeholder.png',
+                  ),
+                  image: NetworkImage(currentDialogue['character'] ?? ''),
                   height: 500,
+                  fit: BoxFit.contain,
+                  fadeInDuration: const Duration(milliseconds: 400),
+                  fadeOutDuration: const Duration(milliseconds: 200),
+
+                  imageErrorBuilder: (_, __, ___) {
+                    return Image.asset(
+                      'assets/placeholders/char_placeholder.png',
+                      height: 500,
+                      fit: BoxFit.contain,
+                    );
+                  },
                 ),
               ),
             Align(

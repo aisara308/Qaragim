@@ -6,6 +6,12 @@ const { hash } = require('crypto');
 
 const {Schema} = mongoose;
 
+const progressSchema = new Schema({
+    novel: { type: Schema.Types.ObjectId, ref: 'novel' },
+    sceneIndex: { type: Number, default: 0 },
+    dialogueIndex: { type: Number, default: 0 }
+}, {_id:false});
+
 const userSchema = new Schema({
     name: {
         type: String,
@@ -30,13 +36,14 @@ const userSchema = new Schema({
         enum: ['Ұл', 'Қыз', 'Басқа']
     },
     resetCode: { type: String },
-resetCodeExpire: { type: Date },
+    resetCodeExpire: { type: Date },
     userNovels: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'novel'
         }
-    ]
+    ],
+    progress: [progressSchema]
 });
 
 userSchema.pre('save', async function () {
@@ -59,7 +66,6 @@ userSchema.methods.comparePasswords = async function(userPassword) {
         throw error;
     }
 }
-
 
 const UserModel = db.model('user', userSchema);
 

@@ -11,3 +11,6 @@ final deleteaccount = url + 'delete-user';
 final getNovels = url + 'novels';
 final addUserNovel = url + 'add-user-novel';
 final getUserNovels = url + 'user-novels';
+final getScript=url+'script/';
+final getProgress=url+'load-progress/';
+final saveProgressRoute=url+'save-progress';

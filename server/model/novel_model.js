@@ -5,8 +5,9 @@ const {Schema} = mongoose;
 
 const novelSchema = new Schema({
     title: {type: String, required: true},
+    slug:{type: String, required: true,unique:true},
     cover: {type: String, required: true},
-    folder: {type: String, required:true}
+    script: {type:Object,required: true}
 });
 
 const NovelModel = db.model('novel',novelSchema);

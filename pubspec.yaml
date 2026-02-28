@@ -61,7 +61,7 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/audio/
+    - assets/placeholders/
     - assets/novels/novel2/bg/
     - assets/novels/novel2/char/
     - assets/novels/novel1/bg/

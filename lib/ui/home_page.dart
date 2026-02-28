@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:qaragim/api_client.dart';
 import 'package:qaragim/config.dart';
 import 'package:qaragim/ui/my_profile/my_profile_screen.dart';
 import 'package:qaragim/ui/settings/settings_screen.dart';
 import 'package:qaragim/ui/read_novel_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 enum NovelMode { user, all }
 
@@ -44,19 +42,13 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> addNovelToUser(String title, String cover, String folder) async {
+  Future<void> addNovelToUser(String title, String cover, String slug) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
-      final responce = await http.post(
-        Uri.parse(addUserNovel),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode({'title': title, 'cover': cover, 'folder': folder}),
-      );
+      final responce = await api.post(addUserNovel, context, {
+        'title': title,
+        'cover': cover,
+        'slug': slug,
+      });
 
       if (responce.statusCode == 200) {
         print('Novel added to user library!');
@@ -157,9 +149,8 @@ class HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => NovelPage(
-                                      novelFolder: novel['folder']!,
-                                    ),
+                                    builder: (context) =>
+                                        NovelPage(novelSlug: novel['slug']!),
                                   ),
                                 );
                               },
@@ -178,11 +169,34 @@ class HomePageState extends State<HomePage> {
                                     ClipRRect(
                                       borderRadius:
                                           BorderRadiusGeometry.circular(8),
-                                      child: Image.asset(
-                                        novel['cover']!,
+                                      child: SizedBox(
                                         width: 150,
                                         height: 190,
-                                        fit: BoxFit.cover,
+                                        child: Image.network(
+                                          novel['cover'] ?? '',
+                                          fit: BoxFit.cover,
+
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.grey.shade300,
+                                                  child: const Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 40,
+                                                  ),
+                                                );
+                                              },
+
+                                          loadingBuilder:
+                                              (context, child, progress) {
+                                                if (progress == null)
+                                                  return child;
+                                                return const Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                );
+                                              },
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 16),
@@ -313,13 +327,13 @@ class HomePageState extends State<HomePage> {
                                 await addNovelToUser(
                                   novel['title'],
                                   novel['cover'],
-                                  novel['folder'],
+                                  novel['slug'],
                                 );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        NovelPage(novelFolder: novel['folder']),
+                                        NovelPage(novelSlug: novel['slug']),
                                   ),
                                 );
                               },
@@ -338,11 +352,34 @@ class HomePageState extends State<HomePage> {
                                     ClipRRect(
                                       borderRadius:
                                           BorderRadiusGeometry.circular(8),
-                                      child: Image.asset(
-                                        novel['cover']!,
+                                      child: SizedBox(
                                         width: 150,
                                         height: 190,
-                                        fit: BoxFit.cover,
+                                        child: Image.network(
+                                          novel['cover'] ?? '',
+                                          fit: BoxFit.cover,
+
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.grey.shade300,
+                                                  child: const Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 40,
+                                                  ),
+                                                );
+                                              },
+
+                                          loadingBuilder:
+                                              (context, child, progress) {
+                                                if (progress == null)
+                                                  return child;
+                                                return const Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                );
+                                              },
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 16),
