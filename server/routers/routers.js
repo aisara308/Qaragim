@@ -18,7 +18,7 @@ router.get('/novels', authMiddleware, NovelController.getAllNovels);
 router.post('/add-user-novel', authMiddleware, NovelController.addNovelToUser);
 router.get('/user-novels', authMiddleware, NovelController.getUserNovels);
 router.get('/script/:slug',authMiddleware, NovelController.getNovelScript);
-router.get('/load-progress',authMiddleware,UserController.getProgress);
+router.get('/load-progress/:slug',authMiddleware,UserController.getProgress);
 router.post('/save-progress',authMiddleware,UserController.saveProgress);
 
 module.exports=router;

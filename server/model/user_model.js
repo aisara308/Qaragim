@@ -6,6 +6,8 @@ const { hash } = require('crypto');
 
 const {Schema} = mongoose;
 
+
+
 const progressSchema = new Schema({
     novel: { type: Schema.Types.ObjectId, ref: 'novel' },
     sceneIndex: { type: Number, default: 0 },

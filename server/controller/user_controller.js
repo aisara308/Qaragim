@@ -1,6 +1,7 @@
 const UserService = require('../services/user_services');
 const jwt = require('jsonwebtoken');
 const UserModel= require('../model/user_model')
+const NovelModel=require('../model/novel_model')
 const nodemailer = require("nodemailer");
 
 exports.register = async(req, res, next)=>{
@@ -186,6 +187,7 @@ exports.refreshToken=async(req,res)=>{
         res.status(200).json({message:'Progress saved'});
 
     }catch(err){
+        console.log(err);
         res.status(500).json({message:'Error saving progress'});
     }
 };
@@ -198,7 +200,6 @@ exports.getProgress = async (req,res)=>{
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
         const email = decoded.email;
-
         const {slug} = req.params;
 
         const user = await UserModel.findOne({email});

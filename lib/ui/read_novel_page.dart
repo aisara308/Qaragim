@@ -63,12 +63,6 @@ class _NovelPageState extends State<NovelPage> {
   }
 
   Future<void> saveProgress() async {
-    final regBody = {
-      "slug": widget.novelSlug,
-      "sceneIndex": sceneIndex,
-      "dialogueIndex": dialogueIndex,
-    };
-    print(regBody);
     await api.post(saveProgressRoute, context, {
       "slug": widget.novelSlug,
       "sceneIndex": sceneIndex,
