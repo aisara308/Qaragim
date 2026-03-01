@@ -5,7 +5,9 @@ import 'package:qaragim/ui/my_profile/my_titles.dart';
 import 'package:qaragim/ui/my_profile/profile_header.dart';
 
 class MyProfileScreen extends StatefulWidget {
+  
   const MyProfileScreen({super.key});
+  
 
   @override
   State<MyProfileScreen> createState() => _MyProfilePageState();

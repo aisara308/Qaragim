@@ -35,9 +35,11 @@ dependencies:
   http: ^1.5.0
   shared_preferences:
   local_auth:
-  url_launcher:
+  url_launcher: ^6.2.6
   image_picker:
   path_provider: ^2.1.5
+  file_picker:
+  audioplayers:
   flutter_localizations:
     sdk: flutter
 
@@ -62,9 +64,4 @@ flutter:
   assets:
     - assets/images/
     - assets/placeholders/
-    - assets/novels/novel2/bg/
-    - assets/novels/novel2/char/
-    - assets/novels/novel1/bg/
-    - assets/novels/novel1/char/
-    - assets/novels/novel1/script.json
-    - assets/novels/novel2/script.json
+    - assets/voices/

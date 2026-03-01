@@ -22,13 +22,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isNotificationsEnabled = true;
 
   Future<void> openTelegramChat(String username, String message) async {
-    final Uri telegramUrl = Uri.parse(
+    final tgUri = Uri.parse(
+      "tg://resolve?domain=$username&text=${Uri.encodeComponent(message)}",
+    );
+
+    final webUri = Uri.parse(
       "https://t.me/$username?text=${Uri.encodeComponent(message)}",
     );
-    if (await canLaunchUrl(telegramUrl)) {
-      await launchUrl(telegramUrl, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Telegram ашу мүмкін болмады';
+
+    try {
+      await launchUrl(tgUri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
     }
   }
 

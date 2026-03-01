@@ -258,6 +258,73 @@ exports.getProgress = async (req,res)=>{
         res.status(500).json({message:"Server error"});
     }
 }
+// Завершить новеллу
+exports.finishNovel = async (req, res) => {
+    try {
+        const { slug } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ message: 'No token' });
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        const email = decoded.email;
+
+        const user = await UserModel.findOne({ email });
+        const novel = await NovelModel.findOne({ slug });
+        if (!user || !novel) return res.status(404).json({ message: 'Not found' });
+
+        // Обновляем прогресс
+        let progress = user.progress.find(p => p.novel.toString() === novel._id.toString());
+        if (!progress) {
+            user.progress.push({
+                novel: novel._id,
+                sceneIndex: 0,
+                dialogueIndex: 0,
+                finished: true
+            });
+        } else {
+            progress.finished = true;
+        }
+
+        await user.save();
+        res.status(200).json({ message: 'Novel marked as finished' });
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: 'Error finishing novel' });
+    }
+};
+
+exports.resetNovelProgress = async (req, res) => {
+    try {
+        const { slug } = req.body;
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ message: 'No token' });
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        const email = decoded.email;
+
+        const user = await UserModel.findOne({ email });
+        const novel = await NovelModel.findOne({ slug });
+        if (!user || !novel) return res.status(404).json({ message: 'Not found' });
+
+        // Сбрасываем прогресс
+        const progress = user.progress.find(p => p.novel.toString() === novel._id.toString());
+        if (progress) {
+            progress.sceneIndex = 0;
+            progress.dialogueIndex = 0;
+            progress.finished = false;
+        }
+
+        await user.save();
+        res.status(200).json({ message: 'Novel progress reset' });
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: 'Error resetting novel' });
+    }
+};
 exports.sendResetCode = async (req,res)=>{
     try{
         const {email} = req.body;

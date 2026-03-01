@@ -5,9 +5,11 @@ const {Schema} = mongoose;
 
 const novelSchema = new Schema({
     title: {type: String, required: true},
+    description: {type: String, required: true},
+    tags: {type: Array,required: true},
     slug:{type: String, required: true,unique:true},
     cover: {type: String, required: true},
-    script: {type:Object,required: true}
+    script: {type:Object,required: true,  default: { scenes: []}}
 });
 
 const NovelModel = db.model('novel',novelSchema);

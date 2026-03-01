@@ -11,7 +11,8 @@ const {Schema} = mongoose;
 const progressSchema = new Schema({
     novel: { type: Schema.Types.ObjectId, ref: 'novel' },
     sceneIndex: { type: Number, default: 0 },
-    dialogueIndex: { type: Number, default: 0 }
+    dialogueIndex: { type: Number, default: 0 },
+    finished: { type: Boolean, default: false }
 }, {_id:false});
 
 const userSchema = new Schema({
@@ -48,16 +49,14 @@ const userSchema = new Schema({
     progress: [progressSchema]
 });
 
-userSchema.pre('save', async function () {
-    try{
-        var user = this;
-        const salt = await (bcrypt.genSalt(10));
-        const hashpass = await bcrypt.hash(user.password, salt);
+userSchema.pre('save', async function(next) {
 
-        user.password = hashpass;
-    }catch(error){
-        throw error;
+    if (!this.isModified('password')) {
+        return next();
     }
+
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
 });
 
 userSchema.methods.comparePasswords = async function(userPassword) {
