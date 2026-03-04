@@ -28,5 +28,6 @@ router.post('/achievement-unlock',authMiddleware,AchievementController.unlockAch
 router.get('/my-achievements',authMiddleware,AchievementController.getUserAchievements);
 
 router.post('/create-novel',authMiddleware,NovelController.createNovel);
+router.delete('/delete-novel/:slug', authMiddleware, NovelController.deleteNovel);
 
 module.exports=router;

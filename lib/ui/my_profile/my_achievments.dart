@@ -95,7 +95,9 @@ class _MyAchievementsTabState extends State<MyAchievementsTab> {
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.white : Colors.grey[200],
+                            color: isSelected
+                                ? Colors.white
+                                : const Color.fromARGB(255, 138, 138, 138),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: isSelected
                                 ? [

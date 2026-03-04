@@ -88,12 +88,15 @@ class HomePageState extends State<HomePage> {
       return aFinished ? 1 : -1;
     });
 
-    final filtered = sortedNovels
+    final filtered0 = sortedNovels
         .where(
           (n) => n['title']!.toString().toLowerCase().contains(
             query.toLowerCase(),
           ),
         )
+        .toList();
+    final filtered = filtered0
+        .where((n) => n['isADraft']!.toString().toLowerCase().contains("false"))
         .toList();
     if (widget.mode == NovelMode.user) {
       return Scaffold(
@@ -117,7 +120,7 @@ class HomePageState extends State<HomePage> {
                   Expanded(
                     child: isLoading
                         ? const Center(child: CircularProgressIndicator())
-                        : novels.isEmpty
+                        : filtered.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,

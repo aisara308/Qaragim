@@ -1,5 +1,5 @@
 // final url = 'http://10.0.2.2:3000/';
-final url = 'http://10.212.69.155:3000/';
+// final url = 'http://10.67.209.155:3000/';
 // final url = 'http://localhost:3000/';
 final registration = '${url}registration';
 final login = '${url}login';
@@ -20,4 +20,5 @@ final finishNovelRoute = '${url}finish';
 final unlockAchievementRoute = "${url}achievement-unlock";
 final myAchievementsRoute = "${url}my-achievements";
 
+final deleteNovelRoute = "${url}delete-novel/";
 final createNovelUrl = '${url}create-novel';

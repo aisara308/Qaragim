@@ -85,29 +85,82 @@ exports.getNovelScript = async (req,res)=>{
 };
 exports.createNovel = async (req, res) => {
     try {
-        const { title, description, tags, cover, slug, script } = req.body;
+        const { _id, title, description, tags, cover, slug, script, isADraft } = req.body;
 
         if (!title || !description || !tags || !cover || !slug || !script) {
             return res.status(400).json({ message: 'Missing novel data' });
         }
 
-        const existing = await NovelModel.findOne({ slug });
-        if (existing) {
+        // проверяем slug
+        const existingSlug = await NovelModel.findOne({ slug });
+
+        if (existingSlug && existingSlug._id.toString() !== _id) {
             return res.status(400).json({ message: 'Novel with this slug already exists' });
         }
 
+        // ЕСЛИ РЕДАКТИРОВАНИЕ
+        if (_id) {
+            const updated = await NovelModel.findByIdAndUpdate(
+                _id,
+                {
+                    title,
+                    description,
+                    tags,
+                    cover,
+                    slug,
+                    script,
+                    isADraft: isADraft ?? false
+                },
+                { new: true, runValidators: true }
+            );
+
+            return res.status(200).json({
+                message: 'Novel updated successfully',
+                novel: updated
+            });
+        }
+
+        // ЕСЛИ СОЗДАНИЕ
         const novel = new NovelModel({
             title,
             description,
             tags,
             cover,
             slug,
-            script
+            script,
+            isADraft: isADraft ?? false
         });
 
         await novel.save();
-        res.status(201).json({ message: 'Novel created successfully', novel });
+
+        res.status(201).json({
+            message: 'Novel created successfully',
+            novel
+        });
+
     } catch (error) {
-        res.status(500).json({ message: 'Error creating novel', error: error.message });
+        res.status(500).json({
+            message: 'Error saving novel',
+            error: error.message
+        });
+    }
+};
+exports.deleteNovel = async (req, res) => {
+    try {
+        const { slug } = req.params;
+
+        const deleted = await NovelModel.findOneAndDelete({ slug });
+
+        if (!deleted) {
+            return res.status(404).json({ message: 'Novel not found' });
+        }
+
+        res.status(200).json({ message: 'Novel deleted successfully' });
+
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error deleting novel',
+            error: error.message
+        });
     }
 };

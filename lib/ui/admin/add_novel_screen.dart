@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:qaragim/api_client.dart';
@@ -26,11 +28,12 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
 
   final api = ApiClient();
 
+  List<dynamic> novels = [];
   List<String> tags = [];
   List<Character> characters = [];
   List<Scene> scenes = [];
-  EditorMode editorMode = EditorMode.manual;
-
+  String? editingSlug;
+  String? editingId;
   final jsonController = TextEditingController();
 
   final List<Map<String, String>> availableVoices = [
@@ -48,6 +51,7 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
   void initState() {
     super.initState();
     _ensureAuthorCharacter();
+    loadNovels();
   }
 
   void _ensureAuthorCharacter() {
@@ -59,8 +63,7 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
           Character(
             id: 'author',
             name: 'Автор',
-            avatar:
-                '', // можно оставить пустым или поставить стандартный аватар
+            avatar: '',
             voice: 'voices/man3.wav',
           ),
         );
@@ -79,7 +82,7 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
 
   /// ================= SAVE =================
 
-  Future<void> saveNovel() async {
+  Future<void> saveNovel({bool isDraft = false}) async {
     if (titleController.text.isEmpty ||
         descController.text.isEmpty ||
         slugController.text.isEmpty ||
@@ -110,15 +113,24 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
     }
 
     final body = {
+      if (editingId != null) "_id": editingId,
       "title": titleController.text,
       "description": descController.text,
       "tags": tags,
       "cover": coverController.text,
       "slug": slugController.text,
       "script": buildScript(),
+      "isADraft": isDraft,
     };
 
     final response = await api.post(createNovelUrl, context, body);
+
+    if (response.statusCode == 200) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => HomePage(mode: NovelMode.user)),
+      );
+    }
 
     if (response.statusCode == 201) {
       Navigator.pushReplacement(
@@ -304,7 +316,7 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
 
               if (name.isEmpty || slug.isEmpty || desc.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Все поля обязательны")),
+                  const SnackBar(content: Text("Бар ақпаратты толтырыңыз")),
                 );
                 return;
               }
@@ -312,7 +324,7 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
               if (!isDescriptionValid(desc)) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("Описание должно быть до 25 слов"),
+                    content: Text("Сипаттама 25 сөзге дейін болуы қажет"),
                   ),
                 );
                 return;
@@ -328,7 +340,7 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
 
               Navigator.pop(context);
             },
-            child: const Text("Создать"),
+            child: const Text("Қосу"),
           ),
         ],
       ),
@@ -542,6 +554,17 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F2F8),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF30253E)),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomePage(mode: NovelMode.all),
+              ),
+            );
+          },
+        ),
         elevation: 5,
         backgroundColor: Colors.transparent,
         title: const Text(
@@ -552,6 +575,15 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.library_books, color: Color(0xFF30253E)),
+            onPressed: () {
+              loadNovels();
+              showNovelsBottomSheet();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -664,7 +696,14 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircleAvatar(backgroundImage: NetworkImage(c.avatar)),
+                          CircleAvatar(
+                            backgroundImage: c.avatar.isNotEmpty
+                                ? NetworkImage(c.avatar)
+                                : null,
+                            child: c.avatar.isEmpty
+                                ? const Icon(Icons.person)
+                                : null,
+                          ),
                           const SizedBox(width: 8),
                           Text(c.name),
                         ],
@@ -725,28 +764,234 @@ class _AddNovelEditorScreenState extends State<AddNovelEditorScreen> {
             const SizedBox(height: 40),
 
             /// ===== SAVE =====
-            Center(
-              child: ElevatedButton(
-                onPressed: saveNovel,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 14,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => saveNovel(isDraft: true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 25,
+                      vertical: 14,
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                  child: const Text("Бастаулықтарға қосу"),
+                ),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: () => saveNovel(isDraft: false),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF30253E),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 25,
+                      vertical: 14,
+                    ),
                   ),
-                  backgroundColor: const Color(0xFF30253E),
+                  child: const Text("Жариялау"),
                 ),
-                child: const Text(
-                  "Новелланы сақтау",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  void showNovelsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: Column(
+                children: [
+                  const Text(
+                    "Новеллалар",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Expanded(
+                    child: novels.isEmpty
+                        ? const Center(child: Text("Жоқ"))
+                        : ListView.builder(
+                            itemCount: novels.length,
+                            itemBuilder: (context, index) {
+                              final novel = novels[index];
+
+                              return Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: ListTile(
+                                  leading: SizedBox(
+                                    width: 60,
+                                    height: 60,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child:
+                                          novel['cover'] != null &&
+                                              novel['cover']
+                                                  .toString()
+                                                  .isNotEmpty
+                                          ? Image.network(
+                                              novel['cover'],
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Container(
+                                              color: Colors.grey.shade300,
+                                              child: const Icon(Icons.image),
+                                            ),
+                                    ),
+                                  ),
+                                  title: Text(novel['title']),
+                                  subtitle: Text(
+                                    novel['isADraft'] == true
+                                        ? "Жарияланбаған"
+                                        : "Жарияланған",
+                                    style: TextStyle(
+                                      color: novel['isADraft'] == true
+                                          ? Colors.orange
+                                          : Colors.green,
+                                    ),
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          fillEditorFromNovel(novel);
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () async {
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title: const Text(
+                                                "Новелланы өшіру?",
+                                              ),
+                                              content: const Text(
+                                                "Новелланы өшіргіңіз келетініне сенімдісіз бе?",
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: const Text("Жоқ"),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.pop(context);
+                                                    final slug = novel['slug'];
+                                                    final url =
+                                                        "$deleteNovelRoute$slug";
+                                                    final response = await api
+                                                        .delete(url, context);
+                                                    if (response.statusCode ==
+                                                        200) {
+                                                      setModalState(() {
+                                                        novels.removeAt(index);
+                                                      });
+                                                    }
+                                                  },
+                                                  child: const Text(
+                                                    "Иә",
+                                                    style: TextStyle(
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void fillEditorFromNovel(dynamic novel) {
+    setState(() {
+      titleController.text = novel['title'];
+      descController.text = novel['description'];
+      editingSlug = novel['slug'];
+      editingId = novel['_id'];
+      slugController.text = novel['slug'];
+      coverController.text = novel['cover'];
+
+      tags = List<String>.from(novel['tags']);
+
+      // characters
+      characters = (novel['script']['characters'] as List)
+          .map(
+            (c) => Character(
+              id: c['id'],
+              name: c['name'],
+              avatar: c['avatar'] ?? '',
+              voice: c['voice'] ?? '',
+            ),
+          )
+          .toList();
+
+      // scenes
+      scenes = (novel['script']['scenes'] as List).map((s) {
+        final scene = Scene(dialogues: []);
+
+        scene.backgroundController.text = s['background'] ?? '';
+
+        scene.dialogues = (s['dialogues'] as List)
+            .map(
+              (d) => Dialogue(characterId: d['characterId'], text: d['text']),
+            )
+            .toList();
+
+        if (s['achievement'] != null) {
+          scene.achievement = Achievement(
+            name: s['achievement']['name'],
+            slug: s['achievement']['slug'],
+            description: s['achievement']['description'],
+          );
+        }
+
+        return scene;
+      }).toList();
+    });
+  }
+
+  Future<void> loadNovels() async {
+    final response = await api.get(getNovels, context);
+
+    if (response.statusCode == 200) {
+      setState(() {
+        novels = jsonDecode(response.body);
+      });
+    }
   }
 }

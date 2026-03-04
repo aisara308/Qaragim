@@ -9,7 +9,8 @@ const novelSchema = new Schema({
     tags: {type: Array,required: true},
     slug:{type: String, required: true,unique:true},
     cover: {type: String, required: true},
-    script: {type:Object,required: true,  default: { scenes: []}}
+    script: {type:Object,required: true,  default: { scenes: []}},
+    isADraft:{type: Boolean,default: false}
 });
 
 const NovelModel = db.model('novel',novelSchema);
